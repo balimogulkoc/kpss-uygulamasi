@@ -1,0 +1,360 @@
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+// Helper: options array → JSON string, correct is index 0-3 → "A"-"D"
+function q(
+  topicId: number,
+  subjectId: number,
+  text: string,
+  opts: [string, string, string, string],
+  correct: 'A' | 'B' | 'C' | 'D',
+  explanation: string,
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD' = 'MEDIUM',
+) {
+  return {
+    topicId,
+    subjectId,
+    text,
+    options: JSON.stringify(opts),
+    correctAnswer: correct,
+    explanation,
+    difficulty,
+    year: 2023,
+    isActive: true,
+  };
+}
+
+const QUESTIONS_BY_TOPIC: Record<number, ReturnType<typeof q>[]> = {
+  // ─── TOPIC 1: Sözcük Türleri ──────────────────────────────────────────────
+  1: [
+    q(1,1,'Aşağıdaki cümlede "güzel" sözcüğü hangi türdedir? "Güzel bir gün geçirdik."',['İsim','Sıfat','Zarf','Zamir'],'B','Güzel, "gün" ismini nitelediği için sıfattır.','EASY'),
+    q(1,1,'"Ben bugün okula gideceğim." cümlesinde "ben" hangi tür zamirdir?',['İşaret zamiri','Kişi zamiri','Soru zamiri','Dönüşlülük zamiri'],'B','Ben, birinci tekil şahıs kişi zamiridir.','EASY'),
+    q(1,1,'Aşağıdakilerden hangisi soyut isimdir?',['Masa','Kalem','Sevgi','Ağaç'],'C','Sevgi duyularla algılanamayan soyut bir kavramdır.','EASY'),
+    q(1,1,'"Hızlı koştu." cümlesinde "hızlı" hangi türdedir?',['Sıfat','İsim','Zarf','Bağlaç'],'C','Hızlı, fiili nitelediği için zarf görevindedir.','MEDIUM'),
+    q(1,1,'Aşağıdaki sözcüklerden hangisi özel isimdir?',['Şehir','Ankara','Dağ','Nehir'],'B','Ankara belirli bir şehrin adı olduğu için özel isimdir.','EASY'),
+    q(1,1,'"Ama" sözcüğü hangi türe girer?',['Edat','Bağlaç','Zarf','Ünlem'],'B','Ama, cümleleri birbirine bağlayan bir bağlaçtır.','EASY'),
+    q(1,1,'"Çocuk bahçede top oynadı." cümlesinde kaç isim vardır?',['1','2','3','4'],'C','Çocuk, bahçe ve top olmak üzere 3 isim vardır.','MEDIUM'),
+    q(1,1,'"Şu kitabı al." cümlesinde "şu" hangi görevdedir?',['Kişi zamiri','İşaret sıfatı','İşaret zamiri','Niteleme sıfatı'],'B','Şu, kitap ismini belirttiği için işaret sıfatıdır.','MEDIUM'),
+    q(1,1,'Aşağıdakilerden hangisi fiil değildir?',['Koşmak','Güzel','Yazmak','Gelmek'],'B','Güzel bir sıfattır, fiil değildir.','EASY'),
+    q(1,1,'"İçin" sözcüğü hangi türdedir?',['Bağlaç','Zarf','Edat','Zamir'],'C','İçin, sözcükler arasında anlam ilişkisi kuran bir edattır.','MEDIUM'),
+    q(1,1,'"Çok güzel bir tablo." cümlesinde "çok" hangi türdedir?',['Sıfat','Zarf','İsim','Edat'],'B','Çok, güzel sıfatını nitelediği için zarf görevindedir.','HARD'),
+    q(1,1,'"Ah, ne kadar yoruldum!" cümlesinde "ah" hangi türdedir?',['Zarf','Bağlaç','Ünlem','Edat'],'C','Ah, duygu ve heyecanı ifade eden bir ünlemdir.','EASY'),
+  ],
+
+  // ─── TOPIC 2: Cümle Bilgisi ───────────────────────────────────────────────
+  2: [
+    q(2,1,'"Ahmet kitabı okudu." cümlesinin öznesi nedir?',['Kitabı','Okudu','Ahmet','Kitap'],'C','Eylemi gerçekleştiren Ahmet öznedir.','EASY'),
+    q(2,1,'"Kitabı okudu." cümlesinde "kitabı" hangi ögedir?',['Özne','Yüklem','Belirtili nesne','Belirtisiz nesne'],'C','Belirtme hâl eki (-ı) aldığı için belirtili nesnedir.','MEDIUM'),
+    q(2,1,'Aşağıdakilerden hangisi isim cümlesidir?',['Koştu.','Güzel bir gündü.','Geldi.','Uyudu.'],'B','Yüklemi isim olan cümle isim cümlesidir.','MEDIUM'),
+    q(2,1,'"Geldi, gördü, yendi." hangi tür cümledir?',['Bağlı cümle','Sıralı cümle','Girişik cümle','İç içe cümle'],'B','Yüklemleri sıralı olduğu için sıralı cümledir.','MEDIUM'),
+    q(2,1,'"Hava güzeldir." cümlesinde yüklem hangi türdedir?',['Fiil yüklemi','İsim yüklemi','Zarf yüklemi','Sıfat yüklemi'],'B','Ek fiille kurulduğu için isim yüklemidir.','EASY'),
+    q(2,1,'Aşağıdakilerden hangisi olumsuz cümledir?',['Geldi.','Gelmedi.','Gelecek mi?','Gel!'],'B','Gelmedi olumsuzluk eki içerdiği için olumsuz cümledir.','EASY'),
+    q(2,1,'"Bahçede oynuyor." cümlesinde "bahçede" hangi ögedir?',['Özne','Nesne','Yer tamlayıcısı','Zarf tümleci'],'C','Bulunma hâl eki (-de) aldığı için yer tamlayıcısıdır.','MEDIUM'),
+    q(2,1,'"Basit cümle" nasıl tanımlanır?',['Tek yüklemli','İki yüklemli','Üç yüklemli','Dört yüklemli'],'A','Tek yüklemli cümleler basit cümledir.','EASY'),
+    q(2,1,'"Kitap okudu." cümlesinde "kitap" hangi ögedir?',['Belirtili nesne','Belirtisiz nesne','Özne','Tümleç'],'B','Hâl eki almadığı için belirtisiz nesnedir.','MEDIUM'),
+    q(2,1,'Aşağıdakilerden hangisinde dolaylı tümleç vardır?',['Kitap okudu.','Eve gitti.','Güzel bir gün.','Hızlı koştu.'],'B','"Eve" yönelme hâliyle dolaylı tümleçtir.','HARD'),
+    q(2,1,'"Ne güzel bir gün!" hangi tür cümledir?',['Soru','Olumsuz','Ünlem','Emir'],'C','Duygu yoğunluğu içerdiği için ünlem cümlesidir.','EASY'),
+    q(2,1,'Edilgen cümlelerde özne nasıl adlandırılır?',['Gerçek özne','Sözde özne','Gizli özne','Ortak özne'],'B','Edilgen cümlelerde özne sözde öznedir.','HARD'),
+    q(2,1,'Aşağıdakilerden hangisinde zarf tümleci vardır?',['Eve gitti.','Dün geldi.','Kitap okudu.','Güzel bir gün.'],'B','Dün, zaman bildiren zarf tümlecidir.','MEDIUM'),
+    q(2,1,'"Çocuklar parkta oynadı." cümlesinde özne nedir?',['Parkta','Oynadı','Çocuklar','Park'],'C','Eylemi gerçekleştiren çocuklardır.','EASY'),
+    q(2,1,'Yüklem cümlenin neresinde bulunur?',['Başında','Ortasında','Sonunda','Her yerinde olabilir'],'D','Türkçede yüklem genellikle sonda olur ama her yerde bulunabilir.','MEDIUM'),
+  ],
+
+  // ─── TOPIC 3: Yazım Kuralları ─────────────────────────────────────────────
+  3: [
+    q(3,1,'Aşağıdakilerden hangisi büyük harfle yazılmalıdır?',['masa','kalem','ankara','kitap'],'C','Özel isimler büyük harfle yazılır.','EASY'),
+    q(3,1,'"de/da" bağlacı nasıl yazılır?',['Bitişik','Ayrı','Her ikisi de doğru','Duruma göre'],'B','de/da bağlacı her zaman ayrı yazılır.','MEDIUM'),
+    q(3,1,'Hangi kısaltma doğru yazılmıştır?',['T.B.M.M.','TBMM','T.b.m.m.','tbmm'],'B','Kurum adı kısaltmaları büyük harfle ve nokta konmadan yazılır.','MEDIUM'),
+    q(3,1,'"ki" eki hangi durumda ayrı yazılır?',['Her zaman','Bağlaç olduğunda','Zamir olduğunda','Hiçbir zaman'],'B','Bağlaç olan "ki" ayrı yazılır.','HARD'),
+    q(3,1,'Tarihler nasıl yazılır?',['29ekim1923','29 Ekim 1923','29 ekim 1923','29.Ekim.1923'],'B','Tarihlerde ay adları büyük harfle yazılır.','EASY'),
+    q(3,1,'Aşağıdakilerden hangisi doğru yazılmıştır?',['göz atmak','gözatmak','göz-atmak','Göz Atmak'],'A','Birleşik fiiller ayrı yazılır.','MEDIUM'),
+    q(3,1,'Para birimleri nasıl yazılır?',['25TL','25 TL','25tl','25 tl'],'B','Para birimi rakamdan ayrı ve büyük harfle yazılır.','EASY'),
+    q(3,1,'Aşağıdakilerden hangisi yanlıştır?',['Türkiye','Ankara','atatürk','Ahmet'],'C','Özel isimler büyük harfle başlar.','EASY'),
+    q(3,1,'"mi/mı" soru eki nasıl yazılır?',['Bitişik','Ayrı','Duruma göre','Her ikisi de olur'],'B','Soru eki her zaman ayrı yazılır.','MEDIUM'),
+    q(3,1,'Ölçü birimleri nasıl yazılır?',['Kg','KG','kg','K.G.'],'C','Ölçü birimleri küçük harfle ve nokta konmadan yazılır.','MEDIUM'),
+    q(3,1,'Aşağıdakilerden hangisi doğru yazılmıştır?',['herşey','her şey','Hepsi','HER ŞEY'],'B','Her şey ayrı yazılır.','EASY'),
+    q(3,1,'Unvanlar özel isimle kullanıldığında nasıl yazılır?',['Küçük harfle','Büyük harfle','Tırnak içinde','Kısaltılarak'],'B','Unvanlar özel isimle kullanıldığında büyük harfle yazılır.','MEDIUM'),
+    q(3,1,'Aşağıdakilerden hangisi yanlış yazılmıştır?',['Cumhuriyet Bayramı','ramazan bayramı','Kurban Bayramı','Ulusal Bayram'],'B','Dini bayramlar da büyük harfle yazılır: Ramazan Bayramı.','MEDIUM'),
+    q(3,1,'"ile" bağlacı ne zaman bitişik yazılır?',['Her zaman','Hiçbir zaman','Ek olarak kullanıldığında','-le/-la şeklinde'],'D','İle bağlacı ek olarak kullanıldığında -le/-la şeklinde bitişik yazılır.','HARD'),
+    q(3,1,'Aşağıdakilerden hangisi doğru yazılmıştır?',['birşey','bir şey','birşey','Bir Şey'],'B','Bir şey ayrı yazılır.','EASY'),
+    q(3,1,'Pekiştirmeli sıfatlar nasıl yazılır?',['Ayrı','Bitişik','Tire ile','Tırnak içinde'],'B','Pekiştirmeli sıfatlar bitişik yazılır: bembeyaz, simsiyah.','MEDIUM'),
+  ],
+
+  // ─── TOPIC 10: Sayı Sistemleri ────────────────────────────────────────────
+  10: [
+    q(10,2,'Aşağıdakilerden hangisi asal sayıdır?',['1','4','7','9'],'C','7, yalnızca 1 ve kendisine bölünebildiği için asal sayıdır.','EASY'),
+    q(10,2,'Hangi sayı hem çift hem de asal sayıdır?',['1','2','4','6'],'B','2, tek çift asal sayıdır.','EASY'),
+    q(10,2,'324 sayısı hangi sayılara bölünür?',['2 ve 3','2, 3 ve 4','2, 3, 4 ve 9','Hepsine'],'C','3+2+4=9 (3 ve 9\'a), son iki rakam 24 (4\'e), son rakam çift (2\'ye).','MEDIUM'),
+    q(10,2,'√2 sayısı hangi kümeye aittir?',['Doğal sayılar','Tam sayılar','Rasyonel sayılar','İrrasyonel sayılar'],'D','√2 kesir olarak yazılamadığı için irrasyoneldir.','MEDIUM'),
+    q(10,2,'3456 sayısında 4 rakamının basamak değeri nedir?',['4','40','400','4000'],'C','4 rakamı yüzler basamağındadır.','EASY'),
+    q(10,2,'Aşağıdakilerden hangisi rasyonel sayıdır?',['√3','π','0,333...','√5'],'C','0,333... = 1/3 şeklinde kesir olarak yazılabilir.','MEDIUM'),
+    q(10,2,'1\'den 20\'ye kadar kaç asal sayı vardır?',['6','7','8','9'],'C','2,3,5,7,11,13,17,19 olmak üzere 8 asal sayı vardır.','MEDIUM'),
+    q(10,2,'Hangi sayı 5\'e bölünür?',['123','234','345','456'],'C','Son rakamı 5 olan sayılar 5\'e bölünür.','EASY'),
+    q(10,2,'En küçük pozitif tam sayı hangisidir?',['0','1','-1','2'],'B','En küçük pozitif tam sayı 1\'dir.','EASY'),
+    q(10,2,'252 sayısının asal çarpanları nelerdir?',['2×126','2²×63','2²×3²×7','2×3×42'],'C','252 = 2²×3²×7','HARD'),
+    q(10,2,'Hangi sayı 9\'a bölünür?',['123','234','333','456'],'C','3+3+3=9, 9\'a bölünür.','MEDIUM'),
+    q(10,2,'EBOB(12,18) kaçtır?',['2','3','6','9'],'C','12=2²×3, 18=2×3², EBOB=2×3=6','MEDIUM'),
+    q(10,2,'EKOK(4,6) kaçtır?',['2','12','24','48'],'B','4=2², 6=2×3, EKOK=2²×3=12','MEDIUM'),
+    q(10,2,'Bir sayının 4\'e bölünebilmesi için ne gerekir?',['Son rakamı çift olmalı','Son iki rakamı 4\'e bölünmeli','Rakamlar toplamı 4\'e bölünmeli','Son rakamı 0 veya 4 olmalı'],'B','4\'e bölünme kuralı: son iki rakam 4\'e bölünmeli.','MEDIUM'),
+  ],
+
+  // ─── TOPIC 11: Kesirler ───────────────────────────────────────────────────
+  11: [
+    q(11,2,'1/3 + 1/4 = ?',['2/7','7/12','5/12','2/12'],'B','Ortak payda 12: 4/12 + 3/12 = 7/12','EASY'),
+    q(11,2,'2/3 × 3/4 = ?',['6/12','1/2','5/7','6/7'],'B','2×3=6, 3×4=12, 6/12=1/2','EASY'),
+    q(11,2,'2/3 ÷ 4/5 = ?',['8/15','5/6','10/12','6/8'],'B','2/3 × 5/4 = 10/12 = 5/6','MEDIUM'),
+    q(11,2,'Hangi kesir en büyüktür?',['1/2','2/3','3/4','4/5'],'D','Ortak paydaya getirince 4/5 en büyüktür.','MEDIUM'),
+    q(11,2,'3/4 ondalık olarak nedir?',['0,25','0,50','0,75','0,80'],'C','3÷4=0,75','EASY'),
+    q(11,2,'0,6 kesir olarak nedir?',['6/100','3/5','6/10','2/3'],'B','0,6=6/10=3/5','EASY'),
+    q(11,2,'5/6 - 1/4 = ?',['4/2','7/12','4/6','3/8'],'B','Ortak payda 12: 10/12 - 3/12 = 7/12','MEDIUM'),
+    q(11,2,'Bileşik kesir hangisidir?',['3/5','1/2','7/3','2/7'],'C','Payı paydadan büyük olan kesir bileşik kesirdir.','EASY'),
+    q(11,2,'2⅓ tam sayılı kesri bileşik kesre çevirin.',['5/3','7/3','8/3','6/3'],'B','2×3+1=7, payda 3: 7/3','EASY'),
+    q(11,2,'1/2 + 1/3 + 1/6 = ?',['1','3/11','2/6','5/6'],'A','Ortak payda 6: 3/6+2/6+1/6=6/6=1','MEDIUM'),
+    q(11,2,'Bir pastanın 3/8\'i yendi. Kalan kısım nedir?',['5/8','3/8','1/2','2/8'],'A','1-3/8=8/8-3/8=5/8','EASY'),
+    q(11,2,'4/5 × 5/8 = ?',['20/40','1/2','9/13','4/8'],'B','4×5=20, 5×8=40, 20/40=1/2','MEDIUM'),
+    q(11,2,'Bir sayının 2/5\'i 10 ise sayı nedir?',['4','20','25','50'],'C','x × 2/5 = 10 → x = 25','MEDIUM'),
+    q(11,2,'0,125 kesir olarak nedir?',['1/4','1/8','1/5','1/6'],'B','0,125=125/1000=1/8','MEDIUM'),
+    q(11,2,'3/4 ile 2/3 toplamı nedir?',['5/7','17/12','5/12','6/7'],'B','Ortak payda 12: 9/12+8/12=17/12','MEDIUM'),
+    q(11,2,'Hangi kesir 1/2\'ye eşittir?',['2/5','3/6','4/9','5/11'],'B','3/6=1/2','EASY'),
+  ],
+
+  // ─── TOPIC 12: Oran-Orantı ────────────────────────────────────────────────
+  12: [
+    q(12,2,'3:4 oranı ile eşdeğer olan oran hangisidir?',['6:9','9:12','6:8','4:6'],'B','9:12 = 3:4','EASY'),
+    q(12,2,'x/4 = 6/8 ise x kaçtır?',['2','3','4','6'],'B','Çapraz çarpım: 8x=24, x=3','EASY'),
+    q(12,2,'%25 kaçtır?',['1/5','1/4','1/3','1/2'],'B','%25=25/100=1/4','EASY'),
+    q(12,2,'100 TL\'nin %20\'si kaç TL\'dir?',['10','15','20','25'],'C','100×20/100=20 TL','EASY'),
+    q(12,2,'3 işçi 6 günde bitirirse, 6 işçi kaç günde bitirir?',['3','4','6','12'],'A','Ters orantı: 3×6=6×x, x=3','MEDIUM'),
+    q(12,2,'Bir ürün 200 TL\'den %15 indirimle satılıyor. Yeni fiyat nedir?',['170 TL','175 TL','180 TL','185 TL'],'A','200×0,85=170 TL','MEDIUM'),
+    q(12,2,'a:b = 2:3 ve b:c = 3:4 ise a:c = ?',['2:4','1:2','3:4','6:12'],'B','a:c = 2:4 = 1:2','MEDIUM'),
+    q(12,2,'%30 artış sonrası 130 TL olan ürünün orijinal fiyatı nedir?',['90 TL','100 TL','110 TL','120 TL'],'B','x×1,3=130, x=100 TL','MEDIUM'),
+    q(12,2,'5 saatte 150 km giden araç 8 saatte kaç km gider?',['200','220','240','250'],'C','150/5=x/8, x=240','EASY'),
+    q(12,2,'Bir sınıfta kız:erkek = 3:2 ise 30 öğrenciden kaçı kızdır?',['12','15','18','20'],'C','3/(3+2)×30=18','MEDIUM'),
+    q(12,2,'%50 artış sonra %50 azalış yapılırsa net değişim nedir?',['%0','%25 azalış','%25 artış','%50 azalış'],'B','1,5×0,5=0,75 → %25 azalış','HARD'),
+    q(12,2,'4/5 = x/20 ise x kaçtır?',['12','14','16','18'],'C','4×20=5×x, x=16','EASY'),
+    q(12,2,'Bir ürünün fiyatı 80 TL\'den 100 TL\'ye çıktı. Artış yüzdesi nedir?',['%20','%25','%30','%40'],'B','(100-80)/80×100=%25','MEDIUM'),
+    q(12,2,'2:3:5 oranında paylaşılan 100 TL\'de en büyük pay nedir?',['20 TL','30 TL','50 TL','40 TL'],'C','5/(2+3+5)×100=50 TL','MEDIUM'),
+    q(12,2,'%40 indirimli fiyatı 60 TL olan ürünün orijinal fiyatı nedir?',['90 TL','100 TL','110 TL','120 TL'],'B','x×0,6=60, x=100 TL','MEDIUM'),
+    q(12,2,'Ters orantıda x ve y arasındaki ilişki nedir?',['x/y=sabit','x+y=sabit','x×y=sabit','x-y=sabit'],'C','Ters orantıda x×y sabittir.','MEDIUM'),
+    q(12,2,'Doğru orantıda x ve y arasındaki ilişki nedir?',['x artar, y azalır','x artar, y artar','x×y=sabit','x-y=sabit'],'B','Doğru orantıda bir büyüyünce diğeri de büyür.','EASY'),
+  ],
+
+  // ─── TOPIC 20: Osmanlı Tarihi ─────────────────────────────────────────────
+  20: [
+    q(20,3,'Osmanlı Devleti hangi yılda kurulmuştur?',['1071','1299','1453','1517'],'B','Osmanlı Devleti 1299\'da Osman Bey tarafından kuruldu.','EASY'),
+    q(20,3,'İstanbul hangi yılda fethedilmiştir?',['1389','1402','1453','1517'],'C','İstanbul 1453\'te Fatih Sultan Mehmet tarafından fethedildi.','EASY'),
+    q(20,3,'Osmanlı\'nın ilk başkenti neresidir?',['Bursa','Edirne','İstanbul','Söğüt'],'D','İlk başkent Söğüt\'tür, ardından Bursa gelir.','MEDIUM'),
+    q(20,3,'Yeniçeri ocağını kim kurmuştur?',['Osman Bey','Orhan Bey','I. Murat','Yıldırım Bayezid'],'C','I. Murat Kapıkulu ocaklarını kurdu.','MEDIUM'),
+    q(20,3,'Karlofça Antlaşması hangi yılda imzalanmıştır?',['1683','1699','1718','1774'],'B','Karlofça Antlaşması 1699\'da imzalandı.','MEDIUM'),
+    q(20,3,'Tanzimat Fermanı hangi yılda ilan edilmiştir?',['1808','1839','1856','1876'],'B','Tanzimat Fermanı 1839\'da ilan edildi.','MEDIUM'),
+    q(20,3,'Osmanlı\'da ilk matbaa kimin tarafından kurulmuştur?',['Katip Çelebi','İbrahim Müteferrika','Evliya Çelebi','Piri Reis'],'B','İbrahim Müteferrika 1727\'de ilk Türk matbaasını kurdu.','HARD'),
+    q(20,3,'Kanuni Sultan Süleyman döneminde hangi savaş kazanıldı?',['Niğbolu','Mohaç','Ankara','Çaldıran'],'B','Mohaç Savaşı (1526) Kanuni döneminde kazanıldı.','MEDIUM'),
+    q(20,3,'Osmanlı\'da ilk anayasa hangi yılda ilan edilmiştir?',['1839','1856','1876','1908'],'C','I. Meşrutiyet ve Kanun-i Esasi 1876\'da ilan edildi.','MEDIUM'),
+    q(20,3,'Yavuz Sultan Selim hangi savaşta Safevi Devleti\'ni yendi?',['Mohaç','Çaldıran','Niğbolu','Kosova'],'B','Çaldıran Savaşı (1514) Yavuz ile Safeviler arasındaydı.','MEDIUM'),
+    q(20,3,'Osmanlı\'da Divan-ı Hümayun\'a kim başkanlık ederdi?',['Padişah','Sadrazam','Şeyhülislam','Kazasker'],'B','Sadrazam Divan-ı Hümayun\'a başkanlık ederdi.','HARD'),
+    q(20,3,'Osmanlı\'nın son padişahı kimdir?',['Abdülhamid II','Mehmed VI Vahdettin','Abdülmecid II','Mehmed V Reşad'],'B','Son padişah Mehmed VI Vahdettin\'dir.','MEDIUM'),
+    q(20,3,'II. Viyana Kuşatması hangi yılda gerçekleşmiştir?',['1571','1683','1699','1718'],'B','II. Viyana Kuşatması 1683\'te yapıldı.','MEDIUM'),
+    q(20,3,'Osmanlı\'da Islahat Fermanı hangi yılda ilan edildi?',['1839','1856','1876','1908'],'B','Islahat Fermanı 1856\'da ilan edildi.','MEDIUM'),
+    q(20,3,'Osmanlı\'da tımar sistemi ne amaçla kurulmuştur?',['Ticaret','Askerlik ve toprak yönetimi','Eğitim','Din işleri'],'B','Tımar sistemi askeri ve idari amaçlarla kuruldu.','MEDIUM'),
+  ],
+
+  // ─── TOPIC 21: Kurtuluş Savaşı ───────────────────────────────────────────
+  21: [
+    q(21,3,'Mustafa Kemal Samsun\'a hangi tarihte çıktı?',['19 Mayıs 1919','23 Nisan 1920','29 Ekim 1923','30 Ekim 1918'],'A','Mustafa Kemal 19 Mayıs 1919\'da Samsun\'a çıktı.','EASY'),
+    q(21,3,'Mondros Mütarekesi hangi yılda imzalandı?',['1917','1918','1919','1920'],'B','Mondros Mütarekesi 30 Ekim 1918\'de imzalandı.','EASY'),
+    q(21,3,'TBMM hangi tarihte açıldı?',['19 Mayıs 1919','23 Nisan 1920','29 Ekim 1923','24 Temmuz 1923'],'B','TBMM 23 Nisan 1920\'de açıldı.','EASY'),
+    q(21,3,'Lozan Antlaşması hangi yılda imzalandı?',['1920','1921','1922','1923'],'D','Lozan Antlaşması 24 Temmuz 1923\'te imzalandı.','EASY'),
+    q(21,3,'Sakarya Meydan Muharebesi\'nde Türk kuvvetlerine kim komuta etti?',['İsmet İnönü','Mustafa Kemal','Fevzi Çakmak','Kazım Karabekir'],'B','Mustafa Kemal Sakarya\'da başkomutanlığı üstlendi.','MEDIUM'),
+    q(21,3,'Büyük Taarruz hangi tarihte başladı?',['26 Ağustos 1922','30 Ağustos 1922','9 Eylül 1922','11 Ekim 1922'],'A','Büyük Taarruz 26 Ağustos 1922\'de başladı.','MEDIUM'),
+    q(21,3,'Amasya Genelgesi\'nin önemi nedir?',['İlk kongre','Kurtuluşun ilk belgesi','TBMM\'nin açılması','Lozan\'ın imzalanması'],'B','Amasya Genelgesi Kurtuluş Savaşı\'nın ilk belgesidir.','MEDIUM'),
+    q(21,3,'I. İnönü Savaşı\'nda Türk kuvvetlerine kim komuta etti?',['Mustafa Kemal','İsmet İnönü','Fevzi Çakmak','Ali Fuat Cebesoy'],'B','İsmet İnönü I. ve II. İnönü savaşlarında komuta etti.','MEDIUM'),
+    q(21,3,'Sivas Kongresi\'nin amacı nedir?',['Osmanlı\'yı kurtarmak','Ulusal birliği sağlamak','Padişahı desteklemek','Müttefiklerle anlaşmak'],'B','Sivas Kongresi ulusal birliği sağlamak için toplandı.','MEDIUM'),
+    q(21,3,'Mudanya Ateşkesi hangi yılda imzalandı?',['1920','1921','1922','1923'],'C','Mudanya Ateşkesi 11 Ekim 1922\'de imzalandı.','HARD'),
+    q(21,3,'Kurtuluş Savaşı\'nda Doğu Cephesi\'nde kim görev yaptı?',['İsmet İnönü','Kazım Karabekir','Ali Fuat Cebesoy','Refet Bele'],'B','Kazım Karabekir Doğu Cephesi komutanıydı.','HARD'),
+    q(21,3,'Erzurum Kongresi hangi yılda toplandı?',['1918','1919','1920','1921'],'B','Erzurum Kongresi 23 Temmuz 1919\'da toplandı.','MEDIUM'),
+    q(21,3,'Misak-ı Millî hangi kurumda kabul edildi?',['Sivas Kongresi','Erzurum Kongresi','Son Osmanlı Mebusan Meclisi','TBMM'],'C','Misak-ı Millî Son Osmanlı Mebusan Meclisi\'nde kabul edildi.','HARD'),
+    q(21,3,'İzmir hangi tarihte kurtarıldı?',['26 Ağustos 1922','30 Ağustos 1922','9 Eylül 1922','11 Ekim 1922'],'C','İzmir 9 Eylül 1922\'de kurtarıldı.','MEDIUM'),
+    q(21,3,'Havza Genelgesi hangi tarihte yayımlandı?',['19 Mayıs 1919','28 Mayıs 1919','22 Haziran 1919','23 Temmuz 1919'],'B','Havza Genelgesi 28 Mayıs 1919\'da yayımlandı.','HARD'),
+    q(21,3,'Kurtuluş Savaşı\'nda Batı Cephesi komutanı kimdir?',['Kazım Karabekir','İsmet İnönü','Ali Fuat Cebesoy','Refet Bele'],'C','Ali Fuat Cebesoy Batı Cephesi\'nin ilk komutanıydı.','HARD'),
+  ],
+
+  // ─── TOPIC 30: Türkiye Fiziki Coğrafyası ─────────────────────────────────
+  30: [
+    q(30,4,'Türkiye\'nin en yüksek dağı hangisidir?',['Erciyes','Uludağ','Ağrı Dağı','Kaçkar'],'C','Ağrı Dağı 5137 m ile Türkiye\'nin en yüksek noktasıdır.','EASY'),
+    q(30,4,'Türkiye\'nin en uzun nehri hangisidir?',['Fırat','Dicle','Kızılırmak','Sakarya'],'C','Kızılırmak 1355 km ile Türkiye\'nin en uzun nehridir.','EASY'),
+    q(30,4,'Türkiye\'nin en büyük gölü hangisidir?',['Tuz Gölü','Van Gölü','Beyşehir','Eğirdir'],'B','Van Gölü 3713 km² ile en büyük göldür.','EASY'),
+    q(30,4,'Türkiye\'nin en büyük tatlı su gölü hangisidir?',['Van Gölü','Tuz Gölü','Beyşehir Gölü','Eğirdir Gölü'],'C','Beyşehir Gölü en büyük tatlı su gölüdür.','MEDIUM'),
+    q(30,4,'Türkiye\'nin yüzölçümü yaklaşık kaç km²\'dir?',['583.000','683.000','783.000','883.000'],'C','Türkiye\'nin yüzölçümü yaklaşık 783.562 km²\'dir.','MEDIUM'),
+    q(30,4,'Türkiye\'nin en verimli ovası hangisidir?',['Konya Ovası','Çukurova','Gediz Ovası','Harran Ovası'],'B','Çukurova Türkiye\'nin en verimli ovasıdır.','MEDIUM'),
+    q(30,4,'Türkiye\'nin en büyük iç ovası hangisidir?',['Çukurova','Konya Ovası','Gediz Ovası','Erzurum Ovası'],'B','Konya Ovası en büyük iç ovadır.','MEDIUM'),
+    q(30,4,'Türkiye\'nin toplam kıyı uzunluğu yaklaşık kaç km\'dir?',['5.333','6.333','7.333','8.333'],'D','Türkiye\'nin toplam kıyı uzunluğu yaklaşık 8.333 km\'dir.','HARD'),
+    q(30,4,'Tuz Gölü hangi tür göldür?',['Tatlı su gölü','Soda gölü','Tektonik göl','Buzul gölü'],'B','Tuz Gölü bir soda gölüdür.','MEDIUM'),
+    q(30,4,'Türkiye hangi enlemler arasında yer alır?',['26°-45° kuzey','36°-42° kuzey','30°-40° kuzey','34°-44° kuzey'],'B','Türkiye 36°-42° kuzey enlemleri arasındadır.','HARD'),
+    q(30,4,'Erciyes Dağı hangi ilde bulunur?',['Sivas','Kayseri','Erzurum','Malatya'],'B','Erciyes Dağı Kayseri\'de bulunur.','EASY'),
+    q(30,4,'Türkiye\'nin en uzun kıyısı hangi denize aittir?',['Karadeniz','Ege','Akdeniz','Marmara'],'B','Ege kıyısı 2805 km ile en uzundur.','MEDIUM'),
+    q(30,4,'Fırat ve Dicle nehirleri hangi denize dökülür?',['Karadeniz','Akdeniz','Basra Körfezi','Hazar Denizi'],'C','Fırat ve Dicle Basra Körfezi\'ne dökülür.','MEDIUM'),
+    q(30,4,'Türkiye\'nin en büyük havzası hangisidir?',['Kızılırmak','Sakarya','Fırat-Dicle','Seyhan'],'C','Fırat-Dicle havzası Türkiye\'nin en büyük havzasıdır.','MEDIUM'),
+    q(30,4,'Kaçkar Dağları hangi bölgededir?',['Karadeniz','Ege','Akdeniz','İç Anadolu'],'A','Kaçkar Dağları Doğu Karadeniz\'dedir.','EASY'),
+  ],
+
+  // ─── TOPIC 6: Paragraf ────────────────────────────────────────────────────
+  6: [
+    q(6,1,'Paragrafın ana düşüncesi genellikle nerede bulunur?',['Ortada','İlk veya son cümlede','Her cümlede','Hiçbirinde'],'B','Ana düşünce genellikle ilk veya son cümlede bulunur.','EASY'),
+    q(6,1,'Açıklayıcı paragrafın temel amacı nedir?',['Duygu aktarmak','Bilgi vermek ve tanımlamak','Olay anlatmak','Tartışmak'],'B','Açıklayıcı paragraf bilgi verir ve tanımlar.','EASY'),
+    q(6,1,'"Çünkü, bu yüzden, dolayısıyla" sözcükleri hangi anlam ilişkisini kurar?',['Karşıtlık','Benzerlik','Neden-sonuç','Sıralama'],'C','Bu sözcükler neden-sonuç ilişkisi kurar.','MEDIUM'),
+    q(6,1,'"Ama, fakat, oysa, ancak" sözcükleri hangi ilişkiyi kurar?',['Neden-sonuç','Karşıtlık','Benzerlik','Sıralama'],'B','Bu sözcükler karşıtlık ilişkisi kurar.','MEDIUM'),
+    q(6,1,'Paragrafta yardımcı düşünceler ne işe yarar?',['Ana düşünceyi destekler','Ana düşünceyi çürütür','Konuyu değiştirir','Sonuç bildirir'],'A','Yardımcı düşünceler ana düşünceyi destekler.','EASY'),
+    q(6,1,'"Önce, sonra, ardından" sözcükleri hangi ilişkiyi kurar?',['Karşıtlık','Neden-sonuç','Sıralama','Benzerlik'],'C','Bu sözcükler sıralama ilişkisi kurar.','EASY'),
+    q(6,1,'Betimleyici paragrafın özelliği nedir?',['Olay anlatır','Gözlem ve izlenimleri aktarır','Bilgi verir','Tartışır'],'B','Betimleyici paragraf gözlem ve izlenimleri aktarır.','MEDIUM'),
+    q(6,1,'Paragrafın giriş cümlesinin görevi nedir?',['Sonuç bildirir','Konuyu tanıtır','Örnekler verir','Tartışır'],'B','Giriş cümlesi konuyu tanıtır ve okuyucuyu hazırlar.','EASY'),
+    q(6,1,'"Örneğin, nitekim, sözgelimi" sözcükleri hangi ilişkiyi kurar?',['Karşıtlık','Sıralama','Örnekleme','Neden-sonuç'],'C','Bu sözcükler örnekleme ilişkisi kurar.','MEDIUM'),
+    q(6,1,'Tartışmacı paragrafın amacı nedir?',['Bilgi vermek','Bir görüşü savunmak','Olay anlatmak','Betimlemek'],'B','Tartışmacı paragraf bir görüşü savunur.','MEDIUM'),
+    q(6,1,'Paragrafta ana düşünce nasıl bir ifadedir?',['Somut ve özel','Soyut ve genel','Kişisel ve öznel','Teknik ve bilimsel'],'B','Ana düşünce soyut ve genel bir ifadedir.','HARD'),
+    q(6,1,'Öyküleyici paragrafın özelliği nedir?',['Bilgi verir','Tartışır','Olayları anlatır','Betimler'],'C','Öyküleyici paragraf olayları anlatır.','EASY'),
+    q(6,1,'"Gibi, benzer şekilde" sözcükleri hangi ilişkiyi kurar?',['Karşıtlık','Benzerlik','Neden-sonuç','Sıralama'],'B','Bu sözcükler benzerlik ilişkisi kurar.','EASY'),
+    q(6,1,'Paragrafın sonuç cümlesinin görevi nedir?',['Konuyu tanıtır','Örnekler verir','Düşünceyi tamamlar','Tartışır'],'C','Sonuç cümlesi düşünceyi tamamlar ve bağlar.','EASY'),
+    q(6,1,'Bir paragrafta kaç ana düşünce bulunur?',['Bir','İki','Üç','Birden fazla'],'A','Bir paragrafta yalnızca bir ana düşünce bulunur.','MEDIUM'),
+    q(6,1,'Paragrafın gelişme cümlelerinin görevi nedir?',['Konuyu tanıtır','Ana düşünceyi destekler','Sonuç bildirir','Soru sorar'],'B','Gelişme cümleleri ana düşünceyi destekler ve açıklar.','EASY'),
+    q(6,1,'Hangi paragraf türü "I. Dünya Savaşı 1914\'te başladı." gibi cümleler içerir?',['Betimleyici','Öyküleyici','Açıklayıcı','Tartışmacı'],'C','Tarihsel bilgi veren cümleler açıklayıcı paragraftadır.','HARD'),
+    q(6,1,'Paragrafta bağdaşıklık ne anlama gelir?',['Cümlelerin birbiriyle anlam bağı kurması','Cümlelerin uzun olması','Sözcüklerin tekrar edilmesi','Paragrafın kısa olması'],'A','Bağdaşıklık cümlelerin anlam bağıyla birbirine bağlanmasıdır.','HARD'),
+  ],
+
+  // ─── TOPIC 14: Denklemler ─────────────────────────────────────────────────
+  14: [
+    q(14,2,'2x + 6 = 0 denkleminin çözümü nedir?',['x=3','x=-3','x=6','x=-6'],'B','2x=-6, x=-3','EASY'),
+    q(14,2,'3x - 9 = 0 denkleminin çözümü nedir?',['x=3','x=-3','x=9','x=-9'],'A','3x=9, x=3','EASY'),
+    q(14,2,'x + 5 = 12 denkleminin çözümü nedir?',['x=5','x=7','x=12','x=17'],'B','x=12-5=7','EASY'),
+    q(14,2,'2x + 3 = 11 denkleminin çözümü nedir?',['x=2','x=3','x=4','x=7'],'C','2x=8, x=4','EASY'),
+    q(14,2,'x² - 9 = 0 denkleminin kökleri nelerdir?',['x=3','x=-3','x=3 ve x=-3','x=9'],'C','x²=9, x=±3','MEDIUM'),
+    q(14,2,'x² + 5x + 6 = 0 denkleminin kökleri nelerdir?',['x=2 ve x=3','x=-2 ve x=-3','x=1 ve x=6','x=-1 ve x=-6'],'B','(x+2)(x+3)=0, x=-2 veya x=-3','MEDIUM'),
+    q(14,2,'Δ = b² - 4ac formülünde Δ < 0 ise ne anlama gelir?',['İki gerçek kök','Çift kök','Gerçek kök yok','Sonsuz kök'],'C','Δ < 0 ise gerçek kök yoktur.','MEDIUM'),
+    q(14,2,'x/3 = 4 denkleminin çözümü nedir?',['x=4/3','x=12','x=7','x=1'],'B','x=4×3=12','EASY'),
+    q(14,2,'2x + y = 10 ve x + y = 6 sisteminin çözümü nedir?',['x=4, y=2','x=2, y=4','x=3, y=3','x=5, y=1'],'A','Çıkarma: x=4, y=2','MEDIUM'),
+    q(14,2,'x² - 4x + 4 = 0 denkleminin kökleri nelerdir?',['x=2 ve x=-2','x=4','x=2 (çift kök)','x=-2 (çift kök)'],'C','(x-2)²=0, x=2 çift kök','MEDIUM'),
+    q(14,2,'5x - 15 = 0 denkleminin çözümü nedir?',['x=3','x=-3','x=5','x=15'],'A','5x=15, x=3','EASY'),
+    q(14,2,'ax + b = 0 denkleminin çözümü nedir (a≠0)?',['x=a/b','x=-b/a','x=b/a','x=-a/b'],'B','ax=-b, x=-b/a','MEDIUM'),
+    q(14,2,'x² - 5x + 6 = 0 denkleminin kökleri nelerdir?',['x=2 ve x=3','x=-2 ve x=-3','x=1 ve x=6','x=5 ve x=1'],'A','(x-2)(x-3)=0, x=2 veya x=3','MEDIUM'),
+    q(14,2,'3x + 2 = 5x - 4 denkleminin çözümü nedir?',['x=1','x=2','x=3','x=4'],'C','3x-5x=-4-2, -2x=-6, x=3','MEDIUM'),
+    q(14,2,'Δ = 0 ise denklemin kaç kökü vardır?',['0','1 (çift kök)','2','Sonsuz'],'B','Δ=0 ise çift kök vardır.','MEDIUM'),
+    q(14,2,'x² = 16 denkleminin çözümü nedir?',['x=4','x=-4','x=4 ve x=-4','x=8'],'C','x=±4','EASY'),
+    q(14,2,'2(x+3) = 10 denkleminin çözümü nedir?',['x=2','x=3','x=4','x=5'],'A','x+3=5, x=2','EASY'),
+  ],
+
+  // ─── TOPIC 23: Atatürk İlkeleri ───────────────────────────────────────────
+  23: [
+    q(23,3,'Atatürk\'ün altı ilkesi "Altı Ok" olarak da bilinir. Bunlardan hangisi değildir?',['Cumhuriyetçilik','Milliyetçilik','Osmanlıcılık','Laiklik'],'C','Osmanlıcılık Atatürk ilkelerinden değildir.','EASY'),
+    q(23,3,'Laiklik ilkesi ne anlama gelir?',['Din devlet işlerini yönetir','Din ve devlet işleri birbirinden ayrılır','Dini eğitim zorunludur','Tek din kabul edilir'],'B','Laiklik din ve devlet işlerinin ayrılmasıdır.','EASY'),
+    q(23,3,'Devletçilik ilkesi ne anlama gelir?',['Özel sektörün desteklenmesi','Devletin ekonomiye müdahalesi','Yabancı yatırımların teşviki','Tarımın önceliklendirilmesi'],'B','Devletçilik devletin ekonomiye müdahalesini öngörür.','MEDIUM'),
+    q(23,3,'Halkçılık ilkesinin temel özelliği nedir?',['Sınıf ayrımını destekler','Devletin tüm vatandaşlara eşit davranması','Halkın yönetime katılmaması','Seçkinlerin yönetimi'],'B','Halkçılık devletin tüm vatandaşlara eşit davranmasıdır.','MEDIUM'),
+    q(23,3,'Cumhuriyetçilik ilkesi hangi tarihte ilan edildi?',['19 Mayıs 1919','23 Nisan 1920','29 Ekim 1923','24 Temmuz 1923'],'C','Cumhuriyet 29 Ekim 1923\'te ilan edildi.','EASY'),
+    q(23,3,'Devrimcilik (İnkılapçılık) ilkesi ne anlama gelir?',['Geçmişe dönmek','Yapılan inkılapları korumak ve geliştirmek','Değişime karşı çıkmak','Osmanlı\'yı yaşatmak'],'B','Devrimcilik yapılan inkılapların korunması ve geliştirilmesidir.','MEDIUM'),
+    q(23,3,'Atatürk ilkeleri anayasaya hangi yılda eklendi?',['1923','1931','1937','1945'],'C','Atatürk ilkeleri 1937\'de anayasaya eklendi.','HARD'),
+    q(23,3,'Milliyetçilik ilkesinin temel özelliği nedir?',['Irkçılığı destekler','Kültürel birliği esas alır','Yabancıları dışlar','Dini birliği esas alır'],'B','Atatürk\'ün milliyetçiliği ırkçılığa karşı, kültürel birliği esas alır.','HARD'),
+    q(23,3,'Hangi ilke en çok tartışılan ve en geç benimsenen ilkedir?',['Cumhuriyetçilik','Milliyetçilik','Laiklik','Halkçılık'],'C','Laiklik en çok tartışılan ve en geç benimsenen ilkedir.','HARD'),
+    q(23,3,'Devletçilik ilkesi hangi olay sonrası önem kazandı?',['I. Dünya Savaşı','Kurtuluş Savaşı','1929 Dünya Ekonomik Krizi','II. Dünya Savaşı'],'C','1929 Dünya Ekonomik Krizi sonrası devletçilik önem kazandı.','MEDIUM'),
+    q(23,3,'Atatürk ilkeleri CHP programına hangi yılda girdi?',['1923','1927','1931','1937'],'C','Atatürk ilkeleri 1931\'de CHP programına girdi.','HARD'),
+    q(23,3,'Egemenliğin kayıtsız şartsız millete ait olduğunu hangi ilke savunur?',['Milliyetçilik','Cumhuriyetçilik','Halkçılık','Devletçilik'],'B','Cumhuriyetçilik egemenliğin millete ait olduğunu savunur.','MEDIUM'),
+    q(23,3,'Hangi ilke sınıf ayrımını reddeder?',['Cumhuriyetçilik','Milliyetçilik','Halkçılık','Devletçilik'],'C','Halkçılık sınıf ayrımını reddeder.','MEDIUM'),
+    q(23,3,'Atatürk ilkelerinin kaçıncısı "Devrimcilik"tir?',['3.','4.','5.','6.'],'D','Devrimcilik altıncı ilkedir.','HARD'),
+    q(23,3,'Laiklik ilkesi hangi alanda en belirgin değişimi getirdi?',['Ekonomi','Eğitim ve hukuk','Tarım','Sanayi'],'B','Laiklik eğitim ve hukuk alanında en belirgin değişimi getirdi.','MEDIUM'),
+    q(23,3,'Atatürk\'ün milliyetçilik anlayışı hangi temele dayanır?',['Irk','Din','Dil ve kültür','Coğrafya'],'C','Atatürk\'ün milliyetçiliği dil ve kültür birliğine dayanır.','MEDIUM'),
+    q(23,3,'Hangi ilke "statükoya karşı" olarak tanımlanır?',['Cumhuriyetçilik','Halkçılık','Devletçilik','Devrimcilik'],'D','Devrimcilik statükoya karşıdır.','MEDIUM'),
+  ],
+
+  // ─── TOPIC 42: Devlet Yapısı ──────────────────────────────────────────────
+  42: [
+    q(42,5,'Türkiye\'de yasama yetkisi hangi organa aittir?',['Cumhurbaşkanı','TBMM','Bakanlar Kurulu','Anayasa Mahkemesi'],'B','Yasama yetkisi TBMM\'ye aittir.','EASY'),
+    q(42,5,'Türkiye\'de yürütme yetkisi kime aittir?',['TBMM','Cumhurbaşkanı','Danıştay','Yargıtay'],'B','2017 değişikliğiyle yürütme yetkisi Cumhurbaşkanına aittir.','MEDIUM'),
+    q(42,5,'TBMM kaç milletvekilinden oluşur?',['450','500','550','600'],'D','TBMM 600 milletvekilinden oluşur.','MEDIUM'),
+    q(42,5,'Milletvekili seçilebilmek için minimum yaş kaçtır?',['18','21','25','30'],'C','Milletvekili seçilebilmek için 25 yaş gerekir.','MEDIUM'),
+    q(42,5,'Cumhurbaşkanı kaç yıllık görev yapar?',['4','5','6','7'],'B','Cumhurbaşkanı 5 yıllık görev yapar.','EASY'),
+    q(42,5,'Cumhurbaşkanı en fazla kaç dönem görev yapabilir?',['1','2','3','Sınırsız'],'B','Cumhurbaşkanı en fazla 2 dönem görev yapabilir.','MEDIUM'),
+    q(42,5,'Türkiye\'de seçimlerde kullanılan sistem nedir?',['Çoğunluk sistemi','Nispi temsil','Karma sistem','Tek turlu sistem'],'B','Türkiye\'de nispi temsil sistemi kullanılır.','HARD'),
+    q(42,5,'TBMM\'de seçim barajı yüzde kaçtır?',['%5','%7','%10','%15'],'B','Seçim barajı %7\'dir (2022\'de %10\'dan indirildi).','HARD'),
+    q(42,5,'Türkiye\'de milletvekili seçimleri kaç yılda bir yapılır?',['3','4','5','6'],'C','Milletvekili seçimleri 5 yılda bir yapılır.','EASY'),
+    q(42,5,'Yargı yetkisi hangi organlara aittir?',['TBMM','Cumhurbaşkanı','Bağımsız mahkemeler','Bakanlar Kurulu'],'C','Yargı yetkisi bağımsız mahkemelere aittir.','EASY'),
+    q(42,5,'Anayasa Mahkemesi\'nin temel görevi nedir?',['Kanun yapmak','Kanunların anayasaya uygunluğunu denetlemek','Yürütmeyi denetlemek','Bütçeyi onaylamak'],'B','Anayasa Mahkemesi kanunların anayasaya uygunluğunu denetler.','MEDIUM'),
+    q(42,5,'Danıştay hangi tür davaları inceler?',['Ceza davaları','İdare davaları','Medeni davalar','Ticaret davaları'],'B','Danıştay idare davalarını inceler.','MEDIUM'),
+    q(42,5,'Yargıtay hangi mahkemenin üst mahkemesidir?',['İdare mahkemeleri','Anayasa Mahkemesi','Adli mahkemeler','Askeri mahkemeler'],'C','Yargıtay adli mahkemelerin üst mahkemesidir.','MEDIUM'),
+    q(42,5,'Türkiye\'de oy kullanma yaşı kaçtır?',['16','17','18','21'],'C','Türkiye\'de oy kullanma yaşı 18\'dir.','EASY'),
+    q(42,5,'Cumhurbaşkanı seçilebilmek için minimum yaş kaçtır?',['30','35','40','45'],'C','Cumhurbaşkanı seçilebilmek için 40 yaş gerekir.','MEDIUM'),
+    q(42,5,'TBMM Başkanı nasıl seçilir?',['Cumhurbaşkanı tarafından','TBMM üyeleri tarafından','Halk tarafından','Bakanlar Kurulu tarafından'],'B','TBMM Başkanı TBMM üyeleri tarafından seçilir.','MEDIUM'),
+    q(42,5,'Türkiye\'de hangi yılda cumhurbaşkanlığı hükümet sistemine geçildi?',['2010','2014','2017','2018'],'D','Cumhurbaşkanlığı hükümet sistemi 2018\'de yürürlüğe girdi.','HARD'),
+    q(42,5,'Sayıştay\'ın görevi nedir?',['Kanun yapmak','Kamu harcamalarını denetlemek','Seçimleri yönetmek','Anayasayı yorumlamak'],'B','Sayıştay kamu harcamalarını denetler.','MEDIUM'),
+  ],
+
+  // ─── TOPIC 50: Türk Kültürü ───────────────────────────────────────────────
+  50: [
+    q(50,6,'Türk alfabesi kaç harften oluşur?',['26','28','29','31'],'C','Türk alfabesi 29 harften oluşur.','EASY'),
+    q(50,6,'Türk alfabesi hangi yılda kabul edildi?',['1923','1928','1932','1935'],'B','Latin alfabesi 1928\'de kabul edildi.','EASY'),
+    q(50,6,'Türkiye\'nin en büyük şehri hangisidir?',['Ankara','İzmir','İstanbul','Bursa'],'C','İstanbul Türkiye\'nin en büyük şehridir.','EASY'),
+    q(50,6,'Türkiye\'nin başkenti neresidir?',['İstanbul','İzmir','Ankara','Bursa'],'C','Ankara Türkiye\'nin başkentidir.','EASY'),
+    q(50,6,'Türk Dil Kurumu hangi yılda kuruldu?',['1928','1932','1935','1938'],'B','TDK 1932\'de kuruldu.','MEDIUM'),
+    q(50,6,'Türk Tarih Kurumu hangi yılda kuruldu?',['1928','1931','1935','1938'],'B','TTK 1931\'de kuruldu.','MEDIUM'),
+    q(50,6,'Türkiye\'de hangi din en yaygındır?',['Hristiyanlık','Yahudilik','İslam','Budizm'],'C','Türkiye\'de İslam en yaygın dindir.','EASY'),
+    q(50,6,'Türkiye\'nin para birimi nedir?',['Euro','Dolar','Türk Lirası','Sterlin'],'C','Türkiye\'nin para birimi Türk Lirası\'dır.','EASY'),
+    q(50,6,'Türkiye hangi kıtalarda yer alır?',['Sadece Asya','Sadece Avrupa','Asya ve Avrupa','Asya ve Afrika'],'C','Türkiye hem Asya hem Avrupa\'da yer alır.','EASY'),
+    q(50,6,'Türkiye\'nin nüfusu yaklaşık kaçtır?',['60 milyon','70 milyon','85 milyon','100 milyon'],'C','Türkiye\'nin nüfusu yaklaşık 85 milyondur.','MEDIUM'),
+    q(50,6,'Türkiye hangi yılda NATO\'ya katıldı?',['1945','1949','1952','1955'],'C','Türkiye 1952\'de NATO\'ya katıldı.','MEDIUM'),
+    q(50,6,'Türkiye hangi yılda BM\'ye katıldı?',['1945','1948','1952','1955'],'A','Türkiye 1945\'te BM\'nin kurucu üyelerinden biri oldu.','HARD'),
+    q(50,6,'Türkiye\'nin en uzun nehri hangisidir?',['Fırat','Dicle','Kızılırmak','Sakarya'],'C','Kızılırmak Türkiye\'nin en uzun nehridir.','EASY'),
+    q(50,6,'Türkiye\'de kaç il bulunmaktadır?',['73','78','81','85'],'C','Türkiye\'de 81 il bulunmaktadır.','EASY'),
+    q(50,6,'Türkiye\'nin milli sporu nedir?',['Futbol','Güreş','Basketbol','Voleybol'],'B','Güreş Türkiye\'nin milli sporudur.','MEDIUM'),
+    q(50,6,'Türkiye\'de hangi yılda çok partili sisteme geçildi?',['1923','1930','1946','1950'],'C','Türkiye\'de çok partili sisteme 1946\'da geçildi.','MEDIUM'),
+    q(50,6,'Türkiye\'nin en önemli ihracat ürünlerinden biri hangisidir?',['Petrol','Tekstil','Altın','Elmas'],'B','Tekstil Türkiye\'nin en önemli ihracat ürünlerindendir.','MEDIUM'),
+  ],
+
+  // ─── TOPIC 40: Anayasa ────────────────────────────────────────────────────
+  40: [
+    q(40,5,'Türkiye\'nin yürürlükteki anayasası hangi yılda yapılmıştır?',['1961','1971','1982','1987'],'C','1982 Anayasası hâlâ yürürlüktedir.','EASY'),
+    q(40,5,'Anayasanın değiştirilemez maddeleri hangileridir?',['1, 2, 3','1, 2, 3, 4','2, 3, 4','1, 3, 5'],'A','1, 2 ve 3. maddeler değiştirilemez.','MEDIUM'),
+    q(40,5,'"Egemenlik kayıtsız şartsız Milletindir." hangi maddede yer alır?',['Madde 2','Madde 4','Madde 6','Madde 8'],'C','Egemenlik Madde 6\'da düzenlenmiştir.','MEDIUM'),
+    q(40,5,'Türkiye Cumhuriyeti\'nin devlet şekli nedir?',['Monarşi','Cumhuriyet','Federasyon','Konfederasyon'],'B','Türkiye bir Cumhuriyettir (Madde 1).','EASY'),
+    q(40,5,'Anayasa Mahkemesi kaç üyeden oluşur?',['9','12','15','17'],'B','Anayasa Mahkemesi 12 asıl üyeden oluşur.','MEDIUM'),
+    q(40,5,'Bireysel başvuru hakkı hangi yıldan itibaren geçerlidir?',['2001','2004','2010','2017'],'C','Bireysel başvuru hakkı 2010 anayasa değişikliğiyle geldi.','HARD'),
+    q(40,5,'Devletin temel nitelikleri hangi maddede sayılmıştır?',['Madde 1','Madde 2','Madde 3','Madde 4'],'B','Devletin temel nitelikleri Madde 2\'de sayılmıştır.','MEDIUM'),
+    q(40,5,'Türkiye\'nin resmi dili nedir?',['Osmanlıca','Türkçe','Kürtçe','Arapça'],'B','Türkçe Türkiye\'nin resmi dilidir (Madde 3).','EASY'),
+    q(40,5,'Anayasaya göre Türkiye\'nin başkenti neresidir?',['İstanbul','İzmir','Ankara','Bursa'],'C','Ankara Türkiye\'nin başkentidir (Madde 3).','EASY'),
+    q(40,5,'Anayasa değişikliği için TBMM\'de kaç oy gerekir?',['Basit çoğunluk','3/5 çoğunluk','2/3 çoğunluk','Oybirliği'],'B','Anayasa değişikliği için 3/5 çoğunluk gerekir.','HARD'),
+    q(40,5,'Türkiye\'nin milli marşı nedir?',['Çanakkale Türküsü','İstiklal Marşı','Ankara Marşı','Cumhuriyet Marşı'],'B','İstiklal Marşı Türkiye\'nin milli marşıdır (Madde 3).','EASY'),
+    q(40,5,'Laiklik ilkesi anayasanın kaçıncı maddesinde yer alır?',['Madde 1','Madde 2','Madde 3','Madde 4'],'B','Laiklik Madde 2\'de devletin temel nitelikleri arasında sayılmıştır.','MEDIUM'),
+    q(40,5,'Türkiye\'nin bayrağının renkleri nelerdir?',['Mavi-Beyaz','Kırmızı-Beyaz','Yeşil-Beyaz','Kırmızı-Sarı'],'B','Türk bayrağı kırmızı zemin üzerine beyaz ay-yıldızdır.','EASY'),
+    q(40,5,'Anayasa Mahkemesi\'ne bireysel başvuru için ne gerekir?',['İç hukuk yolları tüketilmeli','Avukat zorunlu','Yabancı olmak','Devlet memuru olmak'],'A','İç hukuk yolları tüketildikten sonra başvurulabilir.','HARD'),
+    q(40,5,'1982 Anayasası kaç maddeden oluşmaktadır?',['100','150','177','200'],'C','1982 Anayasası değişikliklerle 177 maddeden oluşmaktadır.','HARD'),
+  ],
+};
+
+async function main() {
+  let totalAdded = 0;
+
+  for (const [topicIdStr, qs] of Object.entries(QUESTIONS_BY_TOPIC)) {
+    const topicId = parseInt(topicIdStr);
+    const existing = await prisma.question.count({ where: { topicId } });
+    const needed = Math.max(0, 20 - existing);
+
+    if (needed === 0) {
+      console.log(`✅ Topic ${topicId}: already has ${existing} questions, skipping`);
+      continue;
+    }
+
+    const toAdd = qs.slice(0, needed);
+    await prisma.question.createMany({ data: toAdd });
+    totalAdded += toAdd.length;
+    console.log(`➕ Topic ${topicId}: added ${toAdd.length} questions (was ${existing}, now ${existing + toAdd.length})`);
+  }
+
+  console.log(`\n✅ Total added: ${totalAdded} questions`);
+
+  const counts = await prisma.question.groupBy({
+    by: ['topicId'],
+    _count: { id: true },
+    orderBy: { topicId: 'asc' },
+  });
+  console.log('\n📊 Questions per topic:');
+  counts.forEach((c) => console.log(`  Topic ${c.topicId}: ${c._count.id} questions`));
+}
+
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());

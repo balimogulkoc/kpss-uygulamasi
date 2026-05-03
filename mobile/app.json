@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "KPSS Hazırlık",
+    "slug": "kpss-hazirlik",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.kpsshazirlik.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.kpsshazirlik.app",
+      "versionCode": 1,
+      "permissions": [
+        "NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "scheme": "kpsshazirlik"
+  }
+}
